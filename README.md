@@ -6,7 +6,7 @@ This project trains a transformer model on town name data from and generate new,
 
 ## Requirements
 
-This project relies `keras-nlp`, Python 3.9, and `mamba` if CUDA is not enabled.
+This project relies `keras-nlp` and Python 3.9
 
 ## Installation
 
