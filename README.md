@@ -1,4 +1,4 @@
-# A transformer that makes up town names
+# Generative models for city names by region
 
 This project trains a transformer model on town name data from and generate new, similar-sounding names. That's really it. Most countries are available.
 
