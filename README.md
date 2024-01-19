@@ -1,6 +1,6 @@
 # Generative models for city names by region
 
-This project trains a transformer model on town name data from and generate new, similar-sounding names. That's really it. Most countries are available.
+This project trains a transformer model on town name data and generate new, similar-sounding names. Most countries are available.
 
 # Use
 
