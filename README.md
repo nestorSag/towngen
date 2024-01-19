@@ -33,3 +33,8 @@ Downloaded data is cached in `.city_names`
 ### Train model
 
 Use the `towngen` command to train the model and generate samples. use  `--help` to see available parameters.
+
+Example run:
+```sh
+towngen ---query="admin_code1 == 'ENG'" --country_code=GB --epochs=100
+```
