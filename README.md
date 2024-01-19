@@ -22,7 +22,7 @@ The `towngen.loaders` module downloads available data for a given country code. 
 import towngen.loaders.CityNames as CityNames
 
 # load English town names
-data = loaders.CityNames.load(
+data = CityNames.load(
   country_code="GB", 
   query="admin_code1 == 'ENG'"
 )
