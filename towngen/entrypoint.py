@@ -17,6 +17,9 @@ import towngen.preprocessing as preprocessing
 MODEL_CACHE = Path(".models")
 MODEL_CACHE.mkdir(exist_ok=True)
 
+TOKENIZER_CACHE = Path(".tokenizers")
+TOKENIZER_CACHE.mkdir(exist_ok=True)
+
 SOS_TOKEN = "^"
 EOS_TOKEN = "$"
 
@@ -101,6 +104,7 @@ def train_model(
   """
   logging.info("Training model...")
   model = stacked_decoder_model(
+    sequence_length=features.shape[1],
     embedding_dim=embedding_dim,
     n_tokens = n_tokens,
     n_att_heads = num_heads,
@@ -133,7 +137,8 @@ def main(
   optimizer: str,
   batch_size: int,
   epochs: int,
-  n_samples: int):
+  # n_samples: int
+):
   """Main function
   """
   tf.random.set_seed(seed)
@@ -161,11 +166,21 @@ def main(
   
   # save model
   run_hash = hashlib.sha256(str(time.time()).encode()).hexdigest()
-  model.save(MODEL_CACHE / f"model-{run_hash}.keras")
-  logging.info(f"Model saved in {MODEL_CACHE / f'model-{run_hash}.keras'}")
-  # sample from model
-  for _ in range(n_samples):
-    print(sample(model, tokenizer))
+  model.save(MODEL_CACHE / f"model-{run_hash}")
+  logging.info(f"Model saved in {MODEL_CACHE / f'model-{run_hash}'}")
+
+  # save tokenizer
+  tokenizer_json = tokenizer.to_json()
+  with open(TOKENIZER_CACHE / f"tokenizer-{run_hash}.json", "w") as f:
+    f.write(tokenizer_json)
+  logging.info(f"Tokenizer saved in {TOKENIZER_CACHE / f'tokenizer-{run_hash}.json'}")
+
+  while True:
+    user_input = input("Press enter to produce a sample, any other key to exit: ")
+    if user_input != "":
+      break
+    else:
+      print(sample(model, tokenizer))
 
 
 def entrypoint():
@@ -181,7 +196,7 @@ def entrypoint():
     parser.add_argument("--optimizer", type=str, default="adam", help="optimizer. Defaults to adam")
     parser.add_argument("--batch_size", type=int, default=32, help="batch size. Defaults to 32")
     parser.add_argument("--epochs", type=int, default=25, help="number of epochs. Defaults to 150")
-    parser.add_argument("--n_samples", type=int, default=10, help="number of samples to generate. Defaults to 10")
+    # parser.add_argument("--n_samples", type=int, default=10, help="number of samples to generate. Defaults to 10")
     args = parser.parse_args(sys.argv[1:])
     main(
       args.seed,
@@ -194,5 +209,5 @@ def entrypoint():
       args.optimizer,
       args.batch_size,
       args.epochs,
-      args.n_samples
+      # args.n_samples
     )

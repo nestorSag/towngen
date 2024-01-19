@@ -6,19 +6,60 @@ import keras_nlp
 
 import numpy as np
 
-class MaskedPositionEncoding(keras_nlp.layers.SinePositionEncoding):
+# class MaskedPositionEncoding(keras_nlp.layers.SinePositionEncoding):
 
-  """Add masking capabilities to keras-nlp's `SinePositionEncoding` layer. Also returns aggregate token and position embeddings.
-  """
+#   """Add masking capabilities to keras-nlp's `SinePositionEncoding` layer. Also returns aggregate token and position embeddings.
+#   """
 
-  def compute_mask(self, inputs, mask=None):
-    return mask
+#   def compute_mask(self, inputs, mask=None):
+#     return mask
 
-  def call(self, inputs, *args, **kwargs):
+#   def call(self, inputs, *args, **kwargs):
 
-    return inputs + super().call(inputs)
+#     return inputs + super().call(inputs)
+
+# def stacked_decoder_model(
+#   embedding_dim: int,
+#   n_tokens: int,
+#   n_att_heads: int,
+#   dense_dim: int,
+#   n_decoders: int):
+#   """
+#   Returns a model architecture with stacked transformer decoders, similar to GPT2. 
+
+#   Args:
+#       embedding_dim (int): Dimensionality of token embeddings
+#       n_tokens (int): Number of tokens
+#       n_att_heads (int): Number of self attention heads
+#       dense_dim (int): Dimensionality of feed forward network
+#       n_decoders (int): Number of stacked decoders
+#   """
+
+#   embedding = layers.Embedding(
+#     input_dim = n_tokens,
+#     output_dim = embedding_dim,
+#     mask_zero = True)
+
+#   pos_encoding = MaskedPositionEncoding()
+  
+#   decoders = []
+#   for k in range(n_decoders):
+#     decoder = keras_nlp.layers.TransformerDecoder(
+#       intermediate_dim = dense_dim,
+#       num_heads = n_att_heads)
+#     decoders.append(decoder)
+
+#   output_layer = layers.Dense(units = n_tokens, activation="softmax")
+
+#   model = keras.Sequential(
+#     [embedding, pos_encoding] + 
+#     decoders + 
+#     [output_layer])
+
+#   return model
 
 def stacked_decoder_model(
+  sequence_length: int,
   embedding_dim: int,
   n_tokens: int,
   n_att_heads: int,
@@ -28,6 +69,7 @@ def stacked_decoder_model(
   Returns a model architecture with stacked transformer decoders, similar to GPT2. 
 
   Args:
+      sequence_length (int): Length of input sequences
       embedding_dim (int): Dimensionality of token embeddings
       n_tokens (int): Number of tokens
       n_att_heads (int): Number of self attention heads
@@ -35,28 +77,26 @@ def stacked_decoder_model(
       n_decoders (int): Number of stacked decoders
   """
 
+  input_layer = layers.Input(shape=(sequence_length,))
+
   embedding = layers.Embedding(
     input_dim = n_tokens,
     output_dim = embedding_dim,
-    mask_zero = True)
+    mask_zero = True)(input_layer)
 
-  pos_encoding = MaskedPositionEncoding()
+  x = keras_nlp.layers.SinePositionEncoding()(embedding) + embedding
   
-  decoders = []
-  for k in range(n_decoders):
-    decoder = keras_nlp.layers.TransformerDecoder(
+  for _ in range(n_decoders):
+    x = keras_nlp.layers.TransformerDecoder(
       intermediate_dim = dense_dim,
-      num_heads = n_att_heads)
-    decoders.append(decoder)
+      num_heads = n_att_heads)(x)
 
-  output_layer = layers.Dense(units = n_tokens, activation="softmax")
+  output_layer = layers.Dense(units = n_tokens, activation="softmax")(x)
 
-  model = keras.Sequential(
-    [embedding, pos_encoding] + 
-    decoders + 
-    [output_layer])
+  model = keras.Model(inputs=input_layer, outputs=output_layer)
 
   return model
+
 
 def sample(
   model: keras.Model,
